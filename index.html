@@ -43,7 +43,6 @@
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            border: 10px solid #000;
             position: absolute;
             transition: transform 3s ease-out;
         }
@@ -62,6 +61,26 @@
 
     <script>
         let rotation = 0;
+        function startWheel() {
+            let names = document.getElementById("names").value.split(",").map(name => name.trim()).filter(name => name !== "");
+            let teamCount = parseInt(document.getElementById("teamCount").value);
+
+            if (names.length === 0) {
+                alert("Nejprve zadejte jména.");
+                return;
+            }
+            
+            if (teamCount > names.length) {
+                alert("Počet týmů nemůže být větší než počet hráčů!");
+                return;
+            }
+
+            drawWheel(names);
+            rotation += 360 + Math.random() * 360;
+            document.getElementById("wheel").style.transform = `rotate(${rotation}deg)`;
+            setTimeout(() => generateTeams(names), 3000);
+        }
+
         function drawWheel(segments) {
             let canvas = document.getElementById("wheel");
             let ctx = canvas.getContext("2d");
@@ -77,6 +96,7 @@
                 ctx.closePath();
                 ctx.fillStyle = colors[index % colors.length];
                 ctx.fill();
+                ctx.strokeStyle = "white";
                 ctx.stroke();
                 ctx.fillStyle = "#fff";
                 ctx.font = "14px Arial";
@@ -84,42 +104,25 @@
                             100 + Math.sin(index * segmentAngle + segmentAngle / 2) * 60);
             });
         }
-        
-        function startWheel() {
-            let names = document.getElementById("names").value.split(",").map(name => name.trim()).filter(name => name !== "");
-            if (names.length === 0) {
-                alert("Nejprve zadejte jména.");
-                return;
-            }
-            drawWheel(names);
-            rotation += 360 + Math.random() * 360;
-            document.getElementById("wheel").style.transform = `rotate(${rotation}deg)`;
-            setTimeout(() => generateTeams(names), 3000);
-        }
 
-        function prepareTeams() {
-            let teamCount = parseInt(document.getElementById("teamCount").value);
-            let teamsContainer = document.getElementById("teams");
-            teamsContainer.innerHTML = "";
-            let colors = ["#FF5733", "#33FF57", "#3357FF", "#F4D03F", "#9B59B6", "#E74C3C", "#1ABC9C", "#2E86C1", "#E67E22", "#34495E"];
-            for (let i = 0; i < teamCount; i++) {
-                let div = document.createElement("div");
-                div.classList.add("team");
-                div.style.border = `3px solid ${colors[i % colors.length]}`;
-                div.style.backgroundColor = colors[i % colors.length] + "33";
-                div.innerHTML = `<h3 style='color: ${colors[i % colors.length]}'>Tým ${i + 1}</h3><p>Čeká se na hráče...</p>`;
-                teamsContainer.appendChild(div);
-            }
-        }
-        
         function generateTeams(names) {
             let teamCount = parseInt(document.getElementById("teamCount").value);
+
+            if (teamCount > names.length) {
+                alert("Počet týmů nemůže být větší než počet hráčů!");
+                return;
+            }
+
             let teams = Array.from({ length: teamCount }, () => []);
             names.sort(() => Math.random() - 0.5);
             names.forEach((name, index) => {
                 teams[index % teamCount].push(name);
             });
             displayTeams(teams);
+        }
+
+        function prepareTeams() {
+            displayTeams(Array.from({ length: parseInt(document.getElementById("teamCount").value) }, () => []));
         }
 
         function displayTeams(teams) {
@@ -132,19 +135,17 @@
                 let teamColor = colors[index % colors.length];
                 div.style.border = `3px solid ${teamColor}`;
                 div.style.backgroundColor = teamColor + "33";
-                let captainIndex = Math.floor(Math.random() * team.length);
                 let teamHtml = `<h3 style='color: ${teamColor}'>Tým ${index + 1}</h3>`;
-                team.forEach((name, i) => {
-                    if (i === captainIndex) {
-                        teamHtml += `<p class='captain' style='color: ${teamColor}'>⭐ ${name} (Kapitán) ⭐</p>`;
-                    } else {
-                        teamHtml += `<p>${name}</p>`;
-                    }
-                });
+                if (team.length === 0) {
+                    teamHtml += "<p>Čeká se na hráče...</p>";
+                } else {
+                    teamHtml += team.map(name => `<p>${name}</p>`).join("");
+                }
                 div.innerHTML = teamHtml;
                 teamsContainer.appendChild(div);
             });
         }
+
         prepareTeams();
     </script>
 </body>
