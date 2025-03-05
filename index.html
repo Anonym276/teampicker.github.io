@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generátor Náhodných Týmů</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        textarea {
+            width: 80%;
+            height: 100px;
+        }
+        .teams {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .team {
+            padding: 10px;
+            border-radius: 5px;
+            min-width: 150px;
+            text-align: center;
+        }
+        .team h3 {
+            margin: 0 0 10px;
+        }
+        .captain {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        #wheelContainer {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+        }
+        #wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 10px solid #000;
+            position: absolute;
+            transition: transform 3s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <h2>Generátor Náhodných Týmů</h2>
+    <textarea id="names" placeholder="Zadejte jména oddělená čárkou..."></textarea><br>
+    <label>Počet týmů:</label>
+    <input type="number" id="teamCount" min="2" max="10" value="2" onchange="prepareTeams()">
+    <button onclick="startWheel()">Generovat týmy</button>
+    <div id="wheelContainer">
+        <canvas id="wheel"></canvas>
+    </div>
+    <div id="teams" class="teams"></div>
+
+    <script>
+        let rotation = 0;
+        function drawWheel(segments) {
+            let canvas = document.getElementById("wheel");
+            let ctx = canvas.getContext("2d");
+            canvas.width = 200;
+            canvas.height = 200;
+            let colors = ["#FF5733", "#33FF57", "#3357FF", "#F4D03F", "#9B59B6", "#E74C3C", "#1ABC9C", "#2E86C1", "#E67E22", "#34495E"];
+            let segmentAngle = (2 * Math.PI) / segments.length;
+            
+            segments.forEach((segment, index) => {
+                ctx.beginPath();
+                ctx.moveTo(100, 100);
+                ctx.arc(100, 100, 100, index * segmentAngle, (index + 1) * segmentAngle);
+                ctx.closePath();
+                ctx.fillStyle = colors[index % colors.length];
+                ctx.fill();
+                ctx.stroke();
+                ctx.fillStyle = "#fff";
+                ctx.font = "14px Arial";
+                ctx.fillText(segment, 90 + Math.cos(index * segmentAngle + segmentAngle / 2) * 60, 
+                            100 + Math.sin(index * segmentAngle + segmentAngle / 2) * 60);
+            });
+        }
+        
+        function startWheel() {
+            let names = document.getElementById("names").value.split(",").map(name => name.trim()).filter(name => name !== "");
+            if (names.length === 0) {
+                alert("Nejprve zadejte jména.");
+                return;
+            }
+            drawWheel(names);
+            rotation += 360 + Math.random() * 360;
+            document.getElementById("wheel").style.transform = `rotate(${rotation}deg)`;
+            setTimeout(() => generateTeams(names), 3000);
+        }
+
+        function prepareTeams() {
+            let teamCount = parseInt(document.getElementById("teamCount").value);
+            let teamsContainer = document.getElementById("teams");
+            teamsContainer.innerHTML = "";
+            let colors = ["#FF5733", "#33FF57", "#3357FF", "#F4D03F", "#9B59B6", "#E74C3C", "#1ABC9C", "#2E86C1", "#E67E22", "#34495E"];
+            for (let i = 0; i < teamCount; i++) {
+                let div = document.createElement("div");
+                div.classList.add("team");
+                div.style.border = `3px solid ${colors[i % colors.length]}`;
+                div.style.backgroundColor = colors[i % colors.length] + "33";
+                div.innerHTML = `<h3 style='color: ${colors[i % colors.length]}'>Tým ${i + 1}</h3><p>Čeká se na hráče...</p>`;
+                teamsContainer.appendChild(div);
+            }
+        }
+        
+        function generateTeams(names) {
+            let teamCount = parseInt(document.getElementById("teamCount").value);
+            let teams = Array.from({ length: teamCount }, () => []);
+            names.sort(() => Math.random() - 0.5);
+            names.forEach((name, index) => {
+                teams[index % teamCount].push(name);
+            });
+            displayTeams(teams);
+        }
+
+        function displayTeams(teams) {
+            let teamsContainer = document.getElementById("teams");
+            teamsContainer.innerHTML = "";
+            let colors = ["#FF5733", "#33FF57", "#3357FF", "#F4D03F", "#9B59B6", "#E74C3C", "#1ABC9C", "#2E86C1", "#E67E22", "#34495E"];
+            teams.forEach((team, index) => {
+                let div = document.createElement("div");
+                div.classList.add("team");
+                let teamColor = colors[index % colors.length];
+                div.style.border = `3px solid ${teamColor}`;
+                div.style.backgroundColor = teamColor + "33";
+                let captainIndex = Math.floor(Math.random() * team.length);
+                let teamHtml = `<h3 style='color: ${teamColor}'>Tým ${index + 1}</h3>`;
+                team.forEach((name, i) => {
+                    if (i === captainIndex) {
+                        teamHtml += `<p class='captain' style='color: ${teamColor}'>⭐ ${name} (Kapitán) ⭐</p>`;
+                    } else {
+                        teamHtml += `<p>${name}</p>`;
+                    }
+                });
+                div.innerHTML = teamHtml;
+                teamsContainer.appendChild(div);
+            });
+        }
+        prepareTeams();
+    </script>
+</body>
+</html>
